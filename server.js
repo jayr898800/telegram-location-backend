@@ -14,6 +14,57 @@ function escapeMarkdownV2(text) {
   return text.toString().replace(/([_*[\]()~`>#+\-=|{}.!])/g, "\\$1");
 }
 
+// --- Test page route ---
+app.get("/", (req, res) => {
+  res.send(`
+    <html>
+      <head>
+        <title>Telegram Backend Test</title>
+        <style>
+          body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+          button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        </style>
+      </head>
+      <body>
+        <h1>Telegram Location Backend</h1>
+        <p>Click the button to send test data to Telegram.</p>
+        <button onclick="sendTest()">Send Test Data</button>
+        <p id="status"></p>
+        <script>
+          async function sendTest() {
+            document.getElementById("status").innerText = "Sending...";
+            const res = await fetch("/send-to-telegram", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userAgent: navigator.userAgent,
+                browserName: "Chrome",
+                platform: navigator.platform,
+                language: navigator.language,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                screenWidth: window.screen.width,
+                screenHeight: window.screen.height,
+                effectiveType: navigator.connection?.effectiveType || "unknown",
+                downlink: navigator.connection?.downlink || 0,
+                latitude: "14.5995",
+                longitude: "120.9842",
+                mapLink: "https://maps.google.com/?q=14.5995,120.9842"
+              })
+            });
+            const data = await res.json();
+            if (data.success) {
+              document.getElementById("status").innerText = "✅ Sent successfully!";
+            } else {
+              document.getElementById("status").innerText = "❌ Error: " + data.error;
+            }
+          }
+        </script>
+      </body>
+    </html>
+  `);
+});
+
+// --- Telegram API route ---
 app.post("/send-to-telegram", async (req, res) => {
   try {
     const {
@@ -39,7 +90,7 @@ app.post("/send-to-telegram", async (req, res) => {
 `;
 
     const telegramRes = await fetch(
-      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+      \`https://api.telegram.org/bot\${TELEGRAM_BOT_TOKEN}/sendMessage\`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -63,4 +114,4 @@ app.post("/send-to-telegram", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(\`Server running on port \${PORT}\`));
