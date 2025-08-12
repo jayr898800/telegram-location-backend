@@ -90,17 +90,17 @@ app.post("/send-to-telegram", async (req, res) => {
 `;
 
     const telegramRes = await fetch(
-      \`https://api.telegram.org/bot\${TELEGRAM_BOT_TOKEN}/sendMessage\`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: TELEGRAM_CHAT_ID,
-          text: message,
-          parse_mode: "MarkdownV2"
-        })
-      }
-    );
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+     {
+       method: "POST",
+       headers: { "Content-Type": "application/json" },
+       body: JSON.stringify({
+         chat_id: TELEGRAM_CHAT_ID,
+         text: message,
+         parse_mode: "MarkdownV2"
+      })
+  }
+);
 
     if (telegramRes.ok) {
       res.json({ success: true });
@@ -114,4 +114,4 @@ app.post("/send-to-telegram", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(\`Server running on port \${PORT}\`));
+app.listen(PORT, () => console.log(\`Server running on port \${PORT}`));
